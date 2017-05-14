@@ -746,6 +746,246 @@ For success responses, the following fields are supported. Others will be ignore
 }
 </pre>
 
+# Service Instance Actions
+These are any actions that a broker allows w.r.t the service instances that it manages. The actions here could be anything that the service broker wants to provide and the platform shouldnt have to care what these are. The actions are discoverable by the platform and since the platform has absolutely no clue what these actions are there would be user interaction involved where the actions are presented to the user by the platform and the user performs the action with any input thats required.
+
+## Action Discovery
+By Implementing this endpoint the broker allows the platform to query the actions allowed on a service instance at any point in time. The list of actions returned by the endpoint is dynamic and could depend on the service instance and its internal state. 
+
+##### Route #####
+`GET /v2/service_instances/:instance_id/actions`
+
+The `:instance_id` of a service instance that has been provisioned previously.
+
+#### cURL ####
+<pre class="terminal">
+ $ curl -H "X-Broker-API-Version: 2.11" http://username:password@broker-url/v2/service_instances/:instance_id/actions
+</pre>
+
+### Response ###
+
+| Status Code  | Description  |
+|---|---|
+| 200 OK  | The expected response body is below. |
+
+##### Action <a name="action"></a> #####
+
+|  Response field | Type  | Description  |
+|---|---|---|
+| id*  | string  | A unique identifier for the action. Using a GUID is RECOMMENDED.  |
+| name*  | string  | The CLI-friendly name of the action. MUST be unique within the service. All lowercase, no spaces.  |
+| displayName*  | string  | The display friendly name of the action that would be used for display in the UI and CLI   |
+| description*  | string  | A short description of the action.  |
+| parameters  | array-of-objects  | An array of parameters required by the action.  |
+
+
+##### Parameter <a name="parameter"></a> #####
+
+|  Response field | Type  | Description  |
+|---|---|---|
+| name*  | string  | The CLI-friendly name of the parameter. MUST be unique within the action. All lowercase, no spaces.  |
+| displayName*  | string  | The display friendly name of the parameter that would be used for display in the UI and CLI   |
+| description*  | string  | A short description of the parameter.  |
+| value  | string  | An indication to the platform to provide a default value for the parameter.  |
+| options  | array-of-strings  | A array of values that can be provided as a list of choices to the user.  |
+
+\* Fields with an asterisk are REQUIRED.
+
+<pre>
+{
+  "actions": [{
+    "name": "fake-backup-action",
+    "displayName": "Run periodic backup",
+    "id": "acb56222-XXXX-XXXX-XXXX-feb140a59a66",
+    "description": "Runs and enables periodic service instance backup",
+    "parameters": [{
+      "name": "fake-backup-int-param",
+      "displayName": "Backup Interval (days)",
+      "id": "d3031751-XXXX-XXXX-XXXX-a42377d33222",
+      "description": "Provide the interval at which the service instance data should be backed up",
+      "value": "1",
+      "options": ["1", "2", "3"]
+    }, {
+      "name": "fake-backup-retention-param",
+      "displayName": "Retention Period (days)",
+      "description": "Provide the retention period for the backed up data",
+      "value": "90"
+    }]
+  }, {
+    "name": "fake-restart-action",
+    "displayName": "Restart Service",
+    "description": "Restart the service"
+  }]
+}
+</pre>
+
+## Get an Action
+Retrieve a single action
+
+##### Route #####
+`GET /v2/service_instances/:instance_id/actions/:action_id`
+
+The `:action_id` of a action.
+The `:instance_id` of a service instance that has been provisioned previously.
+
+#### cURL ####
+<pre class="terminal">
+ $ curl -H "X-Broker-API-Version: 2.11" http://username:password@broker-url/v2/service_instances/:instance_id/actions/:action_id
+</pre>
+
+### Response ###
+
+| Status Code  | Description  |
+|---|---|
+| 200 OK  | The expected response body is below. |
+
+##### Action <a name="action"></a> #####
+
+|  Response field | Type  | Description  |
+|---|---|---|
+| id*  | string  | A unique identifier for the action. Using a GUID is RECOMMENDED.  |
+| name*  | string  | The CLI-friendly name of the action. MUST be unique within the service. All lowercase, no spaces.  |
+| displayName*  | string  | The display friendly name of the action that would be used for display in the UI and CLI   |
+| description*  | string  | A short description of the action.  |
+| parameters  | array-of-objects  | An array of parameters required by the action.  |
+
+
+##### Parameter <a name="parameter"></a> #####
+
+|  Response field | Type  | Description  |
+|---|---|---|
+| name*  | string  | The CLI-friendly name of the parameter. MUST be unique within the action. All lowercase, no spaces.  |
+| displayName*  | string  | The display friendly name of the parameter that would be used for display in the UI and CLI   |
+| description*  | string  | A short description of the parameter.  |
+| value  | string  | An indication to the platform to provide a default value for the parameter.  |
+| options  | array-of-strings  | A array of values that can be provided as a list of choices to the user.  |
+
+\* Fields with an asterisk are REQUIRED.
+
+<pre>
+{
+    "name": "fake-backup-action",
+    "displayName": "Run periodic backup",
+    "id": "acb56222-XXXX-XXXX-XXXX-feb140a59a66",
+    "description": "Runs and enables periodic service instance backup",
+    "parameters": [{
+      "name": "fake-backup-int-param",
+      "displayName": "Backup Interval (days)",
+      "description": "Provide the interval at which the service instance data should be backed up",
+      "value": "1",
+      "options": ["1", "2", "3"]
+    }, {
+      "name": "fake-backup-retention-param",
+      "displayName": "Retention Period (days)",
+      "description": "Provide the retention period for the backed up data",
+      "value": "90"
+    }]
+}
+</pre>
+
+## Action Execution
+Platform invokes this endpoint to submit execution requests for the actions for a service instance. The requests are assynchronous by nature and the status can be queried by the platform.
+
+##### Route #####
+`PUT /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
+
+The `:action_id` of a action being executed.
+The `:instance_id` of a service instance that has been provisioned previously.
+The `:execution_id` of an execution is provided by the platform. This ID will be used for future requests (get status and cancel), so the broker will use it to correlate the action it performs.
+
+##### Body #####
+| Request field  | Type  |  Description |
+|---|---|---|
+| action_id*  | string  | The ID of the action (from the action discovery). MUST be globally unique.  |
+| parameters  | array-of-objects  | An array of parameters required by the action.  |
+
+\* Fields with an asterisk are REQUIRED.
+
+<pre class="terminal">
+{
+  "action_id": "action-guid-here",
+  "parameters": [{
+      "name": "fake-backup-int-param",
+      "value": "1"
+    }, {
+      "name": "fake-backup-retention-param",
+      "value": "90"
+    }]
+}
+</pre>
+
+##### cURL #####
+<pre class="terminal">
+$ curl http://username:password@broker-url//v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id -d '{
+  "action_id": "action-guid-here",
+  "parameters": [{
+      "name": "fake-backup-int-param",
+      "value": "1"
+    }, {
+      "name": "fake-backup-retention-param",
+      "value": "90"
+    }]
+}' -X PUT -H "X-Broker-API-Version: 2.11" -H "Content-Type: application/json"
+</pre>
+
+## Get Action Execution status
+Retrieve the status of an action execution.
+
+##### Route #####
+`GET /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
+
+The `:action_id` of a action being executed.
+The `:instance_id` of a service instance that has been provisioned previously.
+The `:execution_id` of an execution is provided by the platform.
+
+#### cURL ####
+<pre class="terminal">
+ $ curl -H "X-Broker-API-Version: 2.11" http://username:password@broker-url/v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id
+</pre>
+
+### Response ###
+
+| Status Code  |  Description |
+|---|---|
+| 200 OK |  The expected response body is below. |
+
+##### Body #####
+
+|  Response field | Type  | Description  |
+|---|---|---|
+| state*  | string  | Valid values are <code>in progress</code>, <code>succeeded</code>, <code>cancelled</code>, and <code>failed</code>. 
+
+\* Fields with an asterisk are REQUIRED.
+
+<pre class="terminal">
+{
+  "state": "in progress",
+  "description": "Restarting (10% complete)."
+}
+</pre>
+
+## Cancel Action Execution
+Cancel the execution of an action.
+
+##### Route #####
+`DELETE /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
+
+The `:action_id` of a action being executed.
+The `:instance_id` of a service instance that has been provisioned previously.
+The `:execution_id` of an execution is provided by the platform.
+
+#### cURL ####
+<pre class="terminal">
+ $ curl -X DELETE -H "X-Broker-API-Version: 2.11" http://username:password@broker-url/v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id
+</pre>
+
+### Response ###
+
+| Status Code  |  Description |
+|---|---|
+| 202 Accepted | Action execution cancellation is in progress.
+| 409 Conflict | If the action execution cannot be cancelled.
+
 ## Broker Errors
 
 ### Response ###
