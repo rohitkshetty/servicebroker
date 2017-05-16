@@ -887,7 +887,7 @@ The `:instance_id` of a service instance that has been provisioned previously.
 Platform invokes this endpoint to submit execution requests for the actions for a service instance. The requests are assynchronous by nature and the status can be queried by the platform.
 
 ##### Route #####
-`PUT /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
+`POST /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
 
 The `:action_id` of a action being executed.
 The `:instance_id` of a service instance that has been provisioned previously.
@@ -971,22 +971,38 @@ The `:execution_id` of an execution is provided by the platform.
 Cancel the execution of an action.
 
 ##### Route #####
-`DELETE /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
+`PUT /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
 
 The `:action_id` of a action being executed.
 The `:instance_id` of a service instance that has been provisioned previously.
-The `:execution_id` of an execution is provided by the platform.
+The `:execution_id` of an execution is provided by the platform. This ID will be used for future requests (get status and cancel), so the broker will use it to correlate the action it performs.
 
-#### cURL ####
+##### Body #####
+| Request field  | Type  |  Description |
+|---|---|---|
+| state*  | string  | The ID of the action (from the action discovery). MUST be globally unique.  |
+| parameters  | array-of-objects  | An array of parameters required by the action.  |
+
+\* Fields with an asterisk are REQUIRED.
+
 <pre class="terminal">
- $ curl -X DELETE -H "X-Broker-API-Version: 2.11" http://username:password@broker-url/v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id
+{
+  "state": "cancelled"
+}
+</pre>
+
+##### cURL #####
+<pre class="terminal">
+$ curl http://username:password@broker-url//v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id -d '{
+  "state": "cancelled"
+}' -X PUT -H "X-Broker-API-Version: 2.11" -H "Content-Type: application/json"
 </pre>
 
 ### Response ###
 
 | Status Code  |  Description |
 |---|---|
-| 202 Accepted | Action execution cancellation is in progress.
+| 202 Accepted | Action execution cancellation is in progress and a get execution status would return a "cancelled" status.
 | 409 Conflict | If the action execution cannot be cancelled.
 
 ## Broker Errors
