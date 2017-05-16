@@ -971,7 +971,7 @@ The `:execution_id` of an execution is provided by the platform.
 Cancel the execution of an action.
 
 ##### Route #####
-`PUT /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id`
+`PUT /v2/service_instances/:instance_id/actions/:action_id/executions/:execution_id` 
 
 The `:action_id` of a action being executed.
 The `:instance_id` of a service instance that has been provisioned previously.
