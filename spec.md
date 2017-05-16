@@ -954,13 +954,16 @@ The `:execution_id` of an execution is provided by the platform.
 |  Response field | Type  | Description  |
 |---|---|---|
 | state*  | string  | Valid values are <code>in progress</code>, <code>succeeded</code>, <code>cancelled</code>, and <code>failed</code>. 
+| description*  | string  | Description or message about the status of the operation.
+| detailedMessage  | string  | Detailed stdout/stderr from the action being performed.
 
 \* Fields with an asterisk are REQUIRED.
 
 <pre class="terminal">
 {
   "state": "in progress",
-  "description": "Restarting (10% complete)."
+  "description": "Restarting (10% complete).",
+  "detailedMessage": "space for detailed stdout/stderr"
 }
 </pre>
 
